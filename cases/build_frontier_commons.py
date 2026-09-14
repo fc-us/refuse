@@ -148,6 +148,7 @@ def build():
 # ---------------------------------------------------------------- render
 
 # A citation is not always a fetchable URL. Link only when it resolves.
+SHORT = {"IRS Exempt Organizations Business Master File": "IRS BMF"}
 CITE_URLS = {"IRS Exempt Organizations Business Master File":
              "https://www.irs.gov/pub/irs-soi/eo1.csv"}
 
@@ -168,12 +169,12 @@ def render(d):
         out = []
         for c in items:
             src = c.get("source")
-            cite = (f'<a href="{e(src_url(src))}">{e(src["cite"])}</a>'
+            cite = (f'<a href="{e(src_url(src))}" title="{e(src["cite"])}">{e(SHORT.get(src["name"], src["name"]))}</a>'
                     if src else '<span class="none">no source of record</span>')
             note = f'<p class="note">{e(c["note"])}</p>' if c.get("note") else ""
             out.append(f"""<tr><th>{e(c['label'])}</th>
 <td><span class="val">{e(c['value'])}</span>{note}</td>
-<td class="src">{cite}<br><span class="meta">{e(src['freshness']) if src else 'asserted by us'}</span></td></tr>""")
+<td class="src">{cite}</td></tr>""")
         return "\n".join(out)
 
     unver = "\n".join(f"""<article class="u">
@@ -207,7 +208,14 @@ table{{width:100%;border-collapse:collapse;font-size:.93rem}}
 th,td{{text-align:left;vertical-align:top;padding:.7rem .6rem;border-top:1px solid var(--line)}}
 th{{width:34%;font-weight:600;font-family:ui-sans-serif,system-ui,sans-serif;font-size:.84rem}}
 .val{{font-weight:600}}
-.src{{width:26%;font-size:.76rem;font-family:ui-sans-serif,system-ui,sans-serif}}
+.src{{width:16%;font-size:.76rem;font-family:ui-sans-serif,system-ui,sans-serif}}
+.srcbox{{border:1px solid var(--line);border-radius:6px;padding:.9rem 1.1rem;margin:0 0 1.4rem;
+background:color-mix(in srgb,var(--ok) 5%,transparent)}}
+.srcbox h3{{font-size:.9rem;margin:0 0 .5rem;font-family:ui-sans-serif,system-ui,sans-serif}}
+.srcbox dl{{font-size:.82rem}}
+.srcbox dt{{width:8.5rem}}
+.srcbox dd{{margin:0 0 .25rem 8.5rem}}
+.srcbox a{{color:var(--ok)}}
 .src a{{color:var(--ok);text-decoration:none;border-bottom:1px solid currentColor;word-break:break-all}}
 .meta{{color:var(--mute)}}
 .note{{margin:.4rem 0 0;font-size:.85rem;color:var(--mute)}}
@@ -235,7 +243,16 @@ that an output which cannot be traced to a source of record does not render. Of 
 {len(v)+len(a)+len(r)+len(u)} things we hold about ourselves, {len(r)+len(u)} did not survive it.</p>
 
 <h2>Verified <span class="c">— {len(v)} claims, each with a citation</span></h2>
-<p class="lede">Every row here came back from a source that states its licence in writing.</p>
+<p class="lede">Every row came back from one source, and that source states its terms in
+writing. Those terms, verbatim:</p>
+<div class="srcbox">
+<h3>{e(IRS.name)}</h3>
+<dl><dt>Licence</dt><dd><strong>{e(IRS.licence)}</strong></dd>
+<dt>Redistributable</dt><dd>{"yes" if IRS.redistributable else "no"}</dd>
+<dt>Freshness</dt><dd>{e(IRS.freshness)}</dd>
+<dt>Coverage</dt><dd>{e(IRS.coverage)}</dd>
+<dt>Citation</dt><dd><a href="{e(CITE_URLS[IRS.name])}">{e(IRS.cite)}</a></dd></dl>
+</div>
 <table>{claim_rows(v)}</table>
 
 <h2>Asserted <span class="c">— {len(a)} claim{'s' if len(a)!=1 else ''}, no source of record</span></h2>
